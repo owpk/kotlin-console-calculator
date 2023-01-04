@@ -1,9 +1,10 @@
 # simple console calculator just for fun :)
 
-<p align="center">
-    [Mathias Bynens](https://mathiasbynens.be/demo/animated-webp)  
-</p>
+[//]: # (<p align="center">)
 
+[//]: # (</p>)
+
+    [Mathias Bynens](https://mathiasbynens.be/demo/animated-webp)  
 <p align="center">
     [Mathias Bynens](docs/ex.webm)  
 </p>
