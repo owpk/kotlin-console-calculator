@@ -31,6 +31,30 @@ fun main(args: Array<String>) {
     val buttonMul = Button(field, "*", 7, 4)
     val buttonDiv = Button(field, "/", 7, 5)
 
+    val buttonSin = object : Button(field, "sin", 1, 0) {
+        override fun selectEvent() {
+            monitor.content = monitor.content + uiContent + "("
+        }
+    }
+
+    val buttonCos = object : Button(field, "cos", 3, 0) {
+        override fun selectEvent() {
+            monitor.content = monitor.content + uiContent + "("
+        }
+    }
+
+    val buttonTan = object : Button(field, "tan", 5, 0) {
+        override fun selectEvent() {
+            monitor.content = monitor.content + uiContent + "("
+        }
+    }
+
+    val buttonSqrt = object : Button(field, "sqrt", 7, 0) {
+        override fun selectEvent() {
+            monitor.content = monitor.content + uiContent + "("
+        }
+    }
+
     val buttonEq = object : Button(field, "=", 9, 3) {
         override fun selectEvent() {
             field.getMonitor().evalContent()
@@ -58,6 +82,7 @@ fun main(args: Array<String>) {
         button8, button9, buttonOpenBracket,
         buttonCloseBracket, buttonPlus, buttonMinus, buttonMul,
         buttonDiv, buttonPow, buttonEq, buttonClear, buttonErase,
+        buttonSin, buttonCos, buttonTan, buttonSqrt,
         cursor
     )
 
@@ -67,6 +92,7 @@ fun main(args: Array<String>) {
         button9, button0, buttonOpenBracket,
         buttonPlus, buttonMinus, buttonMul, buttonDiv,
         buttonCloseBracket, buttonPow, buttonEq, buttonClear,
+        buttonSin, buttonCos, buttonTan, buttonSqrt,
         buttonErase,
     )
 
