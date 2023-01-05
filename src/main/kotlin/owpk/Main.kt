@@ -9,49 +9,49 @@ import java.util.function.Predicate
 import kotlin.math.abs
 
 fun main(args: Array<String>) {
-    val monitor = Monitor()
-    val field = UiField(8, 12, monitor)
+    val field = UiField(8, 12)
 
-    val button0 = Button(field, "0", 3, 4)
-    val button1 = Button(field, "1", 1, 1)
-    val button2 = Button(field, "2", 3, 1)
-    val button3 = Button(field, "3", 5, 1)
-    val button4 = Button(field, "4", 1, 2)
-    val button5 = Button(field, "5", 3, 2)
-    val button6 = Button(field, "6", 5, 2)
-    val button7 = Button(field, "7", 1, 3)
-    val button8 = Button(field, "8", 3, 3)
-    val button9 = Button(field, "9", 5, 3)
+    val button0     = Button(field, "0", 3, 4)
+    val buttonDot   = Button(field, ".", 5, 4)
+    val button1     = Button(field, "1", 1, 1)
+    val button2     = Button(field, "2", 3, 1)
+    val button3     = Button(field, "3", 5, 1)
+    val button4     = Button(field, "4", 1, 2)
+    val button5     = Button(field, "5", 3, 2)
+    val button6     = Button(field, "6", 5, 2)
+    val button7     = Button(field, "7", 1, 3)
+    val button8     = Button(field, "8", 3, 3)
+    val button9     = Button(field, "9", 5, 3)
 
-    val buttonPow = Button(field, "^", 9, 2)
-    val buttonCloseBracket = Button(field, ")", 9, 1)
-    val buttonOpenBracket = Button(field, "(", 7, 1)
-    val buttonPlus = Button(field, "+", 7, 2)
-    val buttonMinus = Button(field, "-", 7, 3)
-    val buttonMul = Button(field, "*", 7, 4)
-    val buttonDiv = Button(field, "/", 7, 5)
+    val buttonPow           = Button(field, "^", 9, 2)
+    val buttonCloseBracket  = Button(field, ")", 9, 1)
+    val buttonOpenBracket   = Button(field, "(", 7, 1)
+    val buttonPlus          = Button(field, "+", 7, 2)
+    val buttonMinus         = Button(field, "-", 7, 3)
+    val buttonMul           = Button(field, "*", 7, 4)
+    val buttonDiv           = Button(field, "/", 7, 5)
 
     val buttonSin = object : Button(field, "sin", 1, 0) {
         override fun selectEvent() {
-            monitor.content = monitor.content + uiContent + "("
+            field.getMonitor().content = field.getMonitor().content + uiContent + "("
         }
     }
 
     val buttonCos = object : Button(field, "cos", 3, 0) {
         override fun selectEvent() {
-            monitor.content = monitor.content + uiContent + "("
+            field.getMonitor().content = field.getMonitor().content + uiContent + "("
         }
     }
 
     val buttonTan = object : Button(field, "tan", 5, 0) {
         override fun selectEvent() {
-            monitor.content = monitor.content + uiContent + "("
+            field.getMonitor().content = field.getMonitor().content + uiContent + "("
         }
     }
 
     val buttonSqrt = object : Button(field, "sqrt", 7, 0) {
         override fun selectEvent() {
-            monitor.content = monitor.content + uiContent + "("
+            field.getMonitor().content = field.getMonitor().content + uiContent + "("
         }
     }
 
@@ -69,8 +69,7 @@ fun main(args: Array<String>) {
 
     val buttonErase = object : Button(field, "<", 9, 5) {
         override fun selectEvent() {
-            val content = field.getMonitor().content;
-            field.getMonitor().content = content.substring(0, content.length - 1)
+            field.getMonitor().erase()
         }
     }
 
@@ -82,7 +81,7 @@ fun main(args: Array<String>) {
         button8, button9, buttonOpenBracket,
         buttonCloseBracket, buttonPlus, buttonMinus, buttonMul,
         buttonDiv, buttonPow, buttonEq, buttonClear, buttonErase,
-        buttonSin, buttonCos, buttonTan, buttonSqrt,
+        buttonSin, buttonCos, buttonTan, buttonSqrt, buttonDot,
         cursor
     )
 
@@ -93,19 +92,16 @@ fun main(args: Array<String>) {
         buttonPlus, buttonMinus, buttonMul, buttonDiv,
         buttonCloseBracket, buttonPow, buttonEq, buttonClear,
         buttonSin, buttonCos, buttonTan, buttonSqrt,
-        buttonErase,
+        buttonDot, buttonErase,
     )
 
     GlobalScreen.registerNativeHook()
     GlobalScreen.addNativeKeyListener(cursor)
-
-    while (true) {
-        field.render()
-        Thread.sleep(150)
-    }
+    GlobalScreen.addNativeKeyListener(field.getMonitor())
+    field.render()
 }
 
-class Monitor {
+class Monitor(private val uiField: UiField) : NativeKeyListener {
     var content: String = ""
 
     fun render() {
@@ -117,6 +113,26 @@ class Monitor {
     fun evalContent() {
         val me: MathExpression = MathExpression(content)
         content = me.evaluate().formulaRepresentation
+    }
+
+    override fun nativeKeyTyped(nativeEvent: NativeKeyEvent) {
+        val charCode = nativeEvent.keyChar.code
+        if (charCode in 40..61) {
+            content += nativeEvent.keyChar
+            uiField.render()
+        }
+    }
+
+    fun erase() {
+        if (content.isNotEmpty())
+            content = content.substring(0, content.length - 1)
+    }
+
+    override fun nativeKeyPressed(nativeEvent: NativeKeyEvent) {
+        if (nativeEvent.keyCode == NativeKeyEvent.VC_BACKSPACE) {
+            erase()
+            uiField.render()
+        }
     }
 }
 
@@ -141,29 +157,34 @@ class Cursor(field: UiField, private var currentUiElement: UiElement) :
                 evalNearestElement(xPoint + 1, yPoint,
                     { xPoint < it.getX() }, { yPoint >= it.getY() || yPoint <= it.getY() })
                 field.getEventListeners().get(currentUiElement.getId())!!.hoverEvent()
+                field.render()
             }
 
             NativeKeyEvent.VC_UP -> {
                 evalNearestElement(xPoint, yPoint + 1,
                     { xPoint >= it.getX() || xPoint <= it.getX() }, { yPoint > it.getY() })
                 field.getEventListeners().get(currentUiElement.getId())!!.hoverEvent()
+                field.render()
             }
 
             NativeKeyEvent.VC_LEFT -> {
                 evalNearestElement(xPoint - 1, yPoint,
                     { xPoint > it.getX() }, { yPoint >= it.getY() || yPoint <= it.getY() })
                 field.getEventListeners().get(currentUiElement.getId())!!.hoverEvent()
+                field.render()
             }
 
             NativeKeyEvent.VC_DOWN -> {
                 evalNearestElement(xPoint, yPoint - 1,
                     { xPoint >= it.getX() || xPoint <= it.getX() }, { yPoint < it.getY() })
                 field.getEventListeners().get(currentUiElement.getId())!!.hoverEvent()
+                field.render()
             }
 
             NativeKeyEvent.VC_ENTER -> {
                 val eventListener = field.getEventListeners().get(currentUiElement.getId())
                 eventListener!!.selectEvent()
+                field.render()
             }
         }
     }
@@ -212,10 +233,11 @@ interface EventListenable : UiElement {
     fun selectEvent()
 }
 
-class UiField(private var height: Int, private var width: Int, private var monitor: Monitor) {
+class UiField(private var height: Int, private var width: Int) {
     private val uiElementHolder: UiElementHolder = UiElementHolder()
     private val eventListenersHolder: EventListenersHolder = EventListenersHolder()
     private var matrix: Array<Array<String?>> = Array(this.height - 1) { arrayOfNulls(width - 1) }
+    private val monitor: Monitor = Monitor(this)
 
     init {
         initEmpty()
